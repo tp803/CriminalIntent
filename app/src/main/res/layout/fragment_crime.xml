@@ -4,29 +4,34 @@
     android:layout_margin="16dp"
     android:orientation="vertical">
 
+    <!-- Title     -->
     <TextView
         style="?android:listSeparatorTextViewStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/crime_title_label"/>
 
+    <!-- Text Box for entry -->
     <EditText
         android:id="@+id/crime_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/crime_title_hint"/>
 
+    <!-- Details Text -->
     <TextView
         style="?android:listSeparatorTextViewStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/crime_details_label"/>
 
+    <!-- Button to do something -->
     <Button
         android:id="@+id/crime_date"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <!-- Check box to mark crime solved -->
     <CheckBox
         android:id="@+id/crime_solved"
         android:layout_width="match_parent"

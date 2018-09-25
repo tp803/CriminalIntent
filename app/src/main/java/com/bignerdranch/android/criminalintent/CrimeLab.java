@@ -7,10 +7,13 @@ import java.util.List;
 import java.util.UUID;
 
 public class CrimeLab {
+    // s prefix makes it clear that it is a static variable
+    // private constructor means other classes can't create a CrimeLab
     private static CrimeLab sCrimeLab;
 
     private List<Crime> mCrimes;
 
+    //you pass in a Context object
     public static CrimeLab get(Context context){
         if (sCrimeLab == null){
             sCrimeLab = new CrimeLab(context);
@@ -29,10 +32,12 @@ public class CrimeLab {
 
     }
 
+    // return mCrimes list
     public List<Crime> getmCrimes(){
         return mCrimes;
     }
 
+    // find UUID and return the crime
     public Crime getCrime(UUID id){
         for(Crime crime:mCrimes){
             if(crime.getmId().equals(id)){

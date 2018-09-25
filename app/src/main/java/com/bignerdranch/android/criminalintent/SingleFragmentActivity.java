@@ -15,10 +15,13 @@ public abstract class SingleFragmentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_fragment);
 
         FragmentManager fm = getSupportFragmentManager();
+        // retrieve the CrimeFragment by view ID
         Fragment fragment = fm.findFragmentById(R.id.fragment_container);
 
+        // if there is no fragment with the given ID, create a new CrimeFragment
         if (fragment == null){
             fragment = createFragment();
+            // fragment transaction adds fragments in the fragment list
             fm.beginTransaction().add(R.id.fragment_container,fragment).commit();
         }
     }
