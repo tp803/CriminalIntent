@@ -1,6 +1,13 @@
 package com.bignerdranch.android.criminalintent;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.bignerdranch.android.criminalintent.database.CrimeBaseHelper;
+import com.bignerdranch.android.criminalintent.database.CrimeCursorWrapper;
+import com.bignerdranch.android.criminalintent.database.CrimeDbSchema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +18,8 @@ public class CrimeLab {
     // private constructor means other classes can't create a CrimeLab
     private static CrimeLab sCrimeLab;
 
-    private List<Crime> mCrimes;
+    private Context mContext;
+    private SQLiteDatabase mDatabase;
 
     //you pass in a Context object
     public static CrimeLab get(Context context){
@@ -22,29 +30,104 @@ public class CrimeLab {
     }
 
     private CrimeLab(Context context){
-        mCrimes = new ArrayList<>();
-        for (int i = 0; i < 100; i++){
-            Crime crime = new Crime();
-            crime.setmTitle("Crime #" + i);
-            crime.setmSolved(i%2 == 0); // every other one
-            mCrimes.add(crime);
-        }
+
+        // create crime database
+        mContext = context.getApplicationContext();
+        mDatabase = new CrimeBaseHelper(mContext).getWritableDatabase();
+    }
+
+    public void addCrime(Crime c){
+        ContentValues values = getContentValues(c);
+
+        // insert a row into database
+        // first argument is the table you want to add this to
+        //second argument rarely used
+        // third argument is the data you want to put in
+        mDatabase.insert(CrimeDbSchema.CrimeTable.NAME, null, values);
 
     }
 
+
     // return mCrimes list
     public List<Crime> getmCrimes(){
-        return mCrimes;
+
+        List<Crime> crimes = new ArrayList<>();
+
+        CrimeCursorWrapper cursor = queryCrimes(null,null);
+
+        try{
+            // start at the top
+            cursor.moveToFirst();
+            // loop through the list
+            while(!cursor.isAfterLast()){
+                // add crimes
+                crimes.add(cursor.getCrime());
+                cursor.moveToNext();
+            }
+        }finally {
+            // need to ensure this last task is completed
+            cursor.close();
+        }
+
+        return crimes;
     }
 
     // find UUID and return the crime
     public Crime getCrime(UUID id){
-        for(Crime crime:mCrimes){
-            if(crime.getmId().equals(id)){
-                return crime;
-            }
-        }
 
-        return null;
+        CrimeCursorWrapper cursor = queryCrimes(
+                CrimeDbSchema.CrimeTable.Cols.UUID + "=?",
+                new String[]{id.toString()}
+        );
+
+        try{
+            if (cursor.getCount() == 0){
+                return null;
+            }
+
+            cursor.moveToFirst();
+            return cursor.getCrime();
+        } finally {
+            cursor.close();
+        }
+    }
+
+    // method to update rows in database after change
+    public void updateCrime(Crime crime){
+        String uuidString = crime.getmId().toString();
+        ContentValues values = getContentValues(crime);
+        // update is similar to insert, but need to specify which rows get updated
+        mDatabase.update(CrimeDbSchema.CrimeTable.NAME, values,
+                CrimeDbSchema.CrimeTable.Cols.UUID + "=?",
+                // use String[] instead of just the UUID due to errors that can happen in SQL
+                new String[]{uuidString});
+    }
+
+    // Querying for crimes
+    private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs){
+        Cursor cursor = mDatabase.query(
+                CrimeDbSchema.CrimeTable.NAME,
+                null,// columns - null selects all columns
+                whereClause,
+                whereArgs,
+                null,//groupBy
+                null,// having
+                null // orderBy
+
+        );
+
+        return new CrimeCursorWrapper(cursor);
+    }
+
+    // Creating ContentValues
+    private static ContentValues getContentValues(Crime crime){
+        ContentValues values = new ContentValues();
+        values.put(CrimeDbSchema.CrimeTable.Cols.UUID, crime.getmId().toString());
+        values.put(CrimeDbSchema.CrimeTable.Cols.TITLE, crime.getmTitle());
+        values.put(CrimeDbSchema.CrimeTable.Cols.DATE, crime.getmDate().getTime());
+        values.put(CrimeDbSchema.CrimeTable.Cols.SOLVED, crime.ismSolved()?1:0);
+
+        return values;
+
     }
 }

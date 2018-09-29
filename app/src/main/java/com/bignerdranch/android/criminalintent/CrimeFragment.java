@@ -54,6 +54,14 @@ public class CrimeFragment extends Fragment {
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
     }
 
+    // When CrimeFragement is done, modifications need to be written out
+    @Override
+    public void onPause(){
+        super.onPause();
+
+        CrimeLab.get(getActivity()).updateCrime(mCrime);
+    }
+
     // This is where we inflate the view from fragment_crime.xml
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

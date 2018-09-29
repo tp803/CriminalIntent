@@ -3,10 +3,15 @@ package com.bignerdranch.android.criminalintent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.PluralsRes;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -17,8 +22,17 @@ import java.util.List;
 
 public class CrimeListFragment extends Fragment {
 
+    private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
+
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
+    private boolean mSubtitlteVisible;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
 
 
@@ -31,6 +45,10 @@ public class CrimeListFragment extends Fragment {
         // need to assign a recyler view a layout manager, or it will crash
         // layout manager positions every item and determines scrolling
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        if (savedInstanceState != null){
+            mSubtitlteVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
+        }
 
         updateUI();
 
@@ -46,6 +64,61 @@ public class CrimeListFragment extends Fragment {
         updateUI();
         }
 
+        @Override
+        public void onSaveInstanceState(Bundle outState){
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(SAVED_SUBTITLE_VISIBLE, mSubtitlteVisible);
+        }
+
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
+        super.onCreateOptionsMenu(menu,inflater);
+        inflater.inflate(R.menu.fragment_crime_list,menu);
+
+        MenuItem subtitleItem = menu.findItem(R.id.show_subtitle);
+        if (mSubtitlteVisible) {
+            subtitleItem.setTitle(R.string.hide_subtitle);
+        } else {
+            subtitleItem.setTitle(R.string.show_subtitle);
+        }
+        }
+
+        // respond to selection of the MenuItem by creating a new Crime, adding it to CrimeLab,
+        // and then starting a new instance of CrimePagerActivity to edit the new Crime
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item){
+        switch (item.getItemId()){
+            case R.id.new_crime:
+                Crime crime = new Crime();
+                CrimeLab.get(getActivity()).addCrime(crime);
+                Intent intent = CrimePagerActivity
+                        .newIntent(getActivity(),crime.getmId());
+                startActivity(intent);
+                return true;
+            case R.id.show_subtitle:
+                mSubtitlteVisible = !mSubtitlteVisible;
+                getActivity().invalidateOptionsMenu();
+                updateSubtitle();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+        }
+
+        // setting up method to update subtitle
+    private void updateSubtitle(){
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        int crimeCount = crimeLab.getmCrimes().size();
+        String subtitle = getString(R.string.subtitle_format, crimeCount);
+
+        if(!mSubtitlteVisible){
+            subtitle = null;
+        }
+
+        AppCompatActivity activity = (AppCompatActivity) getActivity();
+        activity.getSupportActionBar().setSubtitle(subtitle);
+    }
+
         // update user interface
         private void updateUI(){
         CrimeLab crimeLab = CrimeLab.get(getActivity());
@@ -56,9 +129,12 @@ public class CrimeListFragment extends Fragment {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         }else{
-            // if adapter is already set up, call notifyData...
+            // if adapter is already set up, set crimes and call notifyData...
+            mAdapter.setmCrimes(crimes);
             mAdapter.notifyDataSetChanged();
         }
+
+        updateSubtitle();
         }
 
         // CrimeHolder constructor
@@ -129,6 +205,10 @@ public class CrimeListFragment extends Fragment {
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        public void setmCrimes(List<Crime> crimes){
+            mCrimes = crimes;
         }
 
 
