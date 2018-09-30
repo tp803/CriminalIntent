@@ -9,6 +9,8 @@ import com.bignerdranch.android.criminalintent.database.CrimeBaseHelper;
 import com.bignerdranch.android.criminalintent.database.CrimeCursorWrapper;
 import com.bignerdranch.android.criminalintent.database.CrimeDbSchema;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +47,12 @@ public class CrimeLab {
         // third argument is the data you want to put in
         mDatabase.insert(CrimeDbSchema.CrimeTable.NAME, null, values);
 
+    }
+
+    public void deleteCrime(Crime crime){
+        mDatabase.delete(CrimeDbSchema.CrimeTable.NAME,
+                CrimeDbSchema.CrimeTable.Cols.UUID +"=?",
+                new String[]{crime.getmId().toString()});
     }
 
 
@@ -92,6 +100,11 @@ public class CrimeLab {
         }
     }
 
+    public File getPhotoFile(Crime crime){
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir,crime.getPhotoFilename());
+    }
+
     // method to update rows in database after change
     public void updateCrime(Crime crime){
         String uuidString = crime.getmId().toString();
@@ -126,8 +139,13 @@ public class CrimeLab {
         values.put(CrimeDbSchema.CrimeTable.Cols.TITLE, crime.getmTitle());
         values.put(CrimeDbSchema.CrimeTable.Cols.DATE, crime.getmDate().getTime());
         values.put(CrimeDbSchema.CrimeTable.Cols.SOLVED, crime.ismSolved()?1:0);
+        values.put(CrimeDbSchema.CrimeTable.Cols.SUSPECT, crime.getmSuspect());
 
         return values;
 
     }
+
+
 }
+
+

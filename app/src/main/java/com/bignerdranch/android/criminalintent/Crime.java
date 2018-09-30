@@ -1,5 +1,6 @@
 package com.bignerdranch.android.criminalintent;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -39,6 +40,16 @@ public class Crime {
     private Date mDate;
     private boolean mSolved;
 
+    public String getmSuspect() {
+        return mSuspect;
+    }
+
+    public void setmSuspect(String mSuspect) {
+        this.mSuspect = mSuspect;
+    }
+
+    private String mSuspect;
+
     public Crime(){
         this(UUID.randomUUID());
     }
@@ -47,5 +58,10 @@ public class Crime {
         mId = id;
         mDate = new Date();
     }
+
+    public String getPhotoFilename(){
+        return "IMG_"+getmId().toString() + ".jpg";
+    }
+
 }
 
