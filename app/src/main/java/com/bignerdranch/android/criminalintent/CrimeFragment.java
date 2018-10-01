@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,7 +29,6 @@ import android.text.format.DateFormat;
 
 
 import java.io.File;
-import java.net.URI;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -37,18 +37,9 @@ import java.util.UUID;
 
 public class CrimeFragment extends Fragment {
 
-    //android.net.Uri.parse(new java.net.URI("").toString());
-/*
-    URI oldUri;
-    Uri newUri  = new Uri.Builder().scheme(oldUri.getScheme())
-            .encodedAuthority(oldUri.getRawAuthority())
-            .encodedPath(oldUri.getRawPath())
-            .query(oldUri.getRawQuery())
-            .fragment(oldUri.getRawFragment())
-            .build();
-*/
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "DialogDate";
+    private static final String DIALOG_IMAGE = "DialogImage";
 
     // constant for the request code
     private static final int REQUEST_DATE = 0;
@@ -228,8 +219,9 @@ public class CrimeFragment extends Fragment {
                         .getPackageManager().queryIntentActivities(captureImage,
                                 PackageManager.MATCH_DEFAULT_ONLY);
 
-                for (ResolveInfo activity: cameraActivities){
-                    getActivity().grantUriPermission(activity.activityInfo.packageName,
+                for (ResolveInfo activity : cameraActivities){
+                    // activity.activityInfo.packageName
+                    getActivity().grantUriPermission(activity.activityInfo.toString(),
                             uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 }
 
@@ -240,6 +232,18 @@ public class CrimeFragment extends Fragment {
 
 
         mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+
+        // on image click, open zoomed image dialog
+        mPhotoView.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                FragmentManager fragmentManager = getFragmentManager();
+                ImageDisplayFragment fragment = ImageDisplayFragment.newInstance(mPhotoFile);
+                fragment.show(fragmentManager, DIALOG_IMAGE);
+            }
+        });
+
+        updatePhotoView();
 
         // return the view
         return v;
@@ -281,6 +285,14 @@ public class CrimeFragment extends Fragment {
             } finally {
                 c.close();
             }
+        } else if (requestCode == REQUEST_PHOTO){
+            Uri uri = FileProvider.getUriForFile(getActivity(),
+                    "com.bignerdranch.android.criminalintent.fileprovider",
+                    mPhotoFile);
+            getActivity().revokeUriPermission(uri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+            updatePhotoView();
         }
     }
 
@@ -307,6 +319,15 @@ public class CrimeFragment extends Fragment {
         }
 
         return suspect;
+    }
+
+    private void updatePhotoView(){
+        if(mPhotoFile == null || !mPhotoFile.exists()){
+            mPhotoView.setImageDrawable(null);
+        } else {
+            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(),getActivity());
+            mPhotoView.setImageBitmap(bitmap);
+        }
     }
 
 }
